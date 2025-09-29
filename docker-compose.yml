@@ -1,0 +1,60 @@
+# Docker Compose configuration for TLH UK application
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-tlh}
+      POSTGRES_USER: ${POSTGRES_USER:-tlh}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tlh}
+    ports:
+      - "5444:5432"
+    expose:
+      - "5444"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tlh}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-devsecret}
+      - DJANGO_DEBUG=${DJANGO_DEBUG:-1}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-*}
+      - POSTGRES_DB=${POSTGRES_DB:-tlh}
+      - POSTGRES_USER=${POSTGRES_USER:-tlh}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tlh}
+      - POSTGRES_HOST=postgres
+      - ALPHAVANTAGE_API_KEY=HP0CYM88CQVY04WM
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["./start.sh"]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

@@ -1,0 +1,15 @@
+# Normalize line endings
+* text=auto eol=lf
+
+# Treat common data formats as binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.zip binary
+
+# Linguist overrides (optional)
+*.ts linguist-language=TypeScript
+*.tsx linguist-language=TypeScript
+*.py linguist-language=Python

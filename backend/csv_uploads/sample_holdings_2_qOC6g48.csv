@@ -1,0 +1,5 @@
+ticker,name,sector,quantity,avg_cost,trade_date,side,fees
+AZN.L,AstraZeneca PLC,Pharmaceuticals,100,120.50,2023-01-15,BUY,5.00
+SHEL.L,Shell PLC,Oil & Gas,200,25.80,2023-02-20,BUY,10.00
+ULVR.L,Unilever PLC,Consumer Goods,150,45.20,2023-03-10,BUY,7.50
+DGE.L,Diageo PLC,Beverages,75,35.60,2023-04-05,BUY,3.75
