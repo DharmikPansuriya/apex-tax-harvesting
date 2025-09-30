@@ -10,6 +10,8 @@ import {
   CGTReport,
   TLHOpportunity,
   ApiResponse,
+  TLHExecution,
+  ReplacementSuggestion,
 } from "@/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -173,7 +175,7 @@ class ApiClient {
   }
 
   async generateCGTReport(
-    taxYear: string = "2024-25"
+    taxYear: string = "2025-26"
   ): Promise<{ message: string; report: CGTReport }> {
     return this.request<{ message: string; report: CGTReport }>(
       `/api/tlh/opportunities/generate_report/?tax_year=${taxYear}`,
@@ -339,7 +341,13 @@ class ApiClient {
   // File downloads
   async downloadCSV(reportId: string): Promise<Blob> {
     const response = await fetch(
-      `${this.baseUrl}/api/reports/${reportId}/download_csv/`
+      `${this.baseUrl}/api/reports/${reportId}/download_csv/`,
+      {
+        headers: {
+          ...(this.authToken && { Authorization: `Bearer ${this.authToken}` }),
+          Accept: "text/csv,application/csv,*/*",
+        },
+      }
     );
     if (!response.ok) {
       throw new Error(`Failed to download CSV: ${response.statusText}`);
@@ -349,12 +357,61 @@ class ApiClient {
 
   async downloadPDF(reportId: string): Promise<Blob> {
     const response = await fetch(
-      `${this.baseUrl}/api/reports/${reportId}/download_pdf/`
+      `${this.baseUrl}/api/reports/${reportId}/download_pdf/`,
+      {
+        headers: {
+          ...(this.authToken && { Authorization: `Bearer ${this.authToken}` }),
+          Accept: "application/pdf,*/*",
+        },
+      }
     );
     if (!response.ok) {
       throw new Error(`Failed to download PDF: ${response.statusText}`);
     }
     return response.blob();
+  }
+
+  // TLH Execution endpoints
+  async getTLHExecutions(): Promise<ApiResponse<TLHExecution>> {
+    return this.request<ApiResponse<TLHExecution>>("/api/tlh/executions/");
+  }
+
+  async createTLHExecution(data: {
+    holding_id: string;
+    client_id?: string;
+    sell_price?: number;
+    sell_fees?: number;
+    replacement_ticker?: string;
+    replacement_name?: string;
+    replacement_qty?: number;
+    replacement_price?: number;
+    replacement_fees?: number;
+    notes?: string;
+  }): Promise<TLHExecution> {
+    return this.request<TLHExecution>("/api/tlh/executions/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async executeTLH(executionId: string): Promise<any> {
+    return this.request<any>(`/api/tlh/executions/${executionId}/execute/`, {
+      method: "POST",
+    });
+  }
+
+  async cancelTLH(executionId: string): Promise<any> {
+    return this.request<any>(`/api/tlh/executions/${executionId}/cancel/`, {
+      method: "POST",
+    });
+  }
+
+  async getReplacementSuggestions(
+    holdingId: string
+  ): Promise<ReplacementSuggestion[]> {
+    return this.request<ReplacementSuggestion[]>(
+      `/api/tlh/executions/suggestions/?holding_id=${holdingId}`
+    );
   }
 }
 

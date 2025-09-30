@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set token in API client
       apiClient.setAuthToken(token);
 
-      // Set user data from localStorage
+      // Set user data from localStorage first
       setUser(JSON.parse(userData));
       setUserProfile(JSON.parse(userProfileData));
 
@@ -108,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Verify token by getting user profile
       try {
         const response = await apiClient.getMe();
+        // Update with fresh data from server
         setUser(response.user);
         setUserProfile(response.user_profile);
         if (response.wealth_manager) {
@@ -117,8 +118,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setClient(response.client);
         }
       } catch (error) {
-        // If verification fails, token is invalid - clear everything and logout
-        console.warn("Token verification failed, clearing authentication");
+        console.warn("Token verification failed:", error);
+        // Don't automatically logout on verification failure during initialization
+        // Let the user stay logged in with cached data and try again later
+        console.warn(
+          "Keeping cached authentication data, will retry verification"
+        );
+      }
+    } catch (error) {
+      console.error("Authentication check failed:", error);
+      // Only clear data if there's a critical error
+      if (error instanceof SyntaxError) {
+        // JSON parse error - clear corrupted data
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("user");
@@ -130,18 +141,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUserProfile(null);
         setWealthManager(null);
         setClient(null);
-        setIsLoading(false);
-        return;
       }
-    } catch (error) {
-      // Clear invalid data
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("user_profile");
-      localStorage.removeItem("wealth_manager");
-      localStorage.removeItem("client");
-      apiClient.clearAuthToken();
     } finally {
       setIsLoading(false);
     }
@@ -156,9 +156,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refresh_token", response.refresh);
       localStorage.setItem("user", JSON.stringify(response.user));
       localStorage.setItem(
+        "user_profile",
+        JSON.stringify(response.user_profile)
+      );
+      localStorage.setItem(
         "wealth_manager",
         JSON.stringify(response.wealth_manager)
       );
+      if (response.client) {
+        localStorage.setItem("client", JSON.stringify(response.client));
+      }
 
       // Set token in API client
       apiClient.setAuthToken(response.access);
@@ -187,9 +194,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("refresh_token", response.refresh);
       localStorage.setItem("user", JSON.stringify(response.user));
       localStorage.setItem(
+        "user_profile",
+        JSON.stringify(response.user_profile)
+      );
+      localStorage.setItem(
         "wealth_manager",
         JSON.stringify(response.wealth_manager)
       );
+      if (response.client) {
+        localStorage.setItem("client", JSON.stringify(response.client));
+      }
 
       // Set token in API client
       apiClient.setAuthToken(response.access);

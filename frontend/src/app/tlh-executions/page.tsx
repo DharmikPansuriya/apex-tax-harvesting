@@ -1,14 +1,14 @@
 "use client";
 
 import { Layout } from "@/components/Layout";
-import { ClientsPage } from "@/components/ClientsPage";
+import { TLHExecutionsPage } from "@/components/TLHExecutionsPage";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
-export default function Clients() {
+export default function TLHExecutions() {
   return (
     <ProtectedRoute>
       <Layout>
-        <ClientsPage />
+        <TLHExecutionsPage />
       </Layout>
     </ProtectedRoute>
   );

@@ -160,6 +160,7 @@ class MarketDataService:
             print(f"trying symbol variants for {ticker}")
             for variant in self._alpha_symbol_variants(ticker):
                 price = self._get_alpha_last_close(variant)
+                print(f"price for {variant}: {price}")
                 if price is not None:
                     print(f"alpha last close for {variant}: {price}")
                     cache.set(cache_key, float(price), self.cache_timeout)

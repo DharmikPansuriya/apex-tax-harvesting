@@ -13,6 +13,7 @@ import {
   LogOut,
   User,
   ArrowLeftRight,
+  Play,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +25,7 @@ const getNavigation = (isWealthManager: boolean) => {
     { name: "Transactions", href: "/transactions", icon: ArrowLeftRight },
     { name: "Reports", href: "/reports", icon: FileText },
     { name: "TLH Opportunities", href: "/tlh", icon: TrendingDown },
+    { name: "TLH Executions", href: "/tlh-executions", icon: Play },
     { name: "CSV Upload", href: "/upload", icon: Upload },
   ];
 

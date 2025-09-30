@@ -2,11 +2,14 @@
 
 import { Layout } from "@/components/Layout";
 import { TransactionsPage } from "@/components/TransactionsPage";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function Transactions() {
   return (
-    <Layout>
-      <TransactionsPage />
-    </Layout>
+    <ProtectedRoute>
+      <Layout>
+        <TransactionsPage />
+      </Layout>
+    </ProtectedRoute>
   );
 }

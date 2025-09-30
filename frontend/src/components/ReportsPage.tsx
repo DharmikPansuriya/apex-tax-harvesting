@@ -1,14 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { useCGTReports, useGenerateCGTReport } from "@/hooks/useApi";
+import {
+  useCGTReports,
+  useGenerateCGTReport,
+  useDownloadCSV,
+  useDownloadPDF,
+} from "@/hooks/useApi";
+import { formatCurrency } from "@/utils/format";
 import { FileText, Download, Plus, Calendar } from "lucide-react";
 
 export function ReportsPage() {
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-  const [selectedTaxYear, setSelectedTaxYear] = useState("2024-25");
+  const [selectedTaxYear, setSelectedTaxYear] = useState("2025-26");
   const { data: reportsData, isLoading, error } = useCGTReports();
   const generateReport = useGenerateCGTReport();
+  const downloadCSV = useDownloadCSV();
+  const downloadPDF = useDownloadPDF();
 
   const reports = reportsData?.results || [];
 
@@ -17,6 +25,38 @@ export function ReportsPage() {
       await generateReport.mutateAsync(selectedTaxYear);
     } catch (error) {
       console.error("Error generating report:", error);
+    }
+  };
+
+  const handleDownloadCSV = async (reportId: string, taxYear: string) => {
+    try {
+      const blob = await downloadCSV.mutateAsync(reportId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cgt_report_${taxYear}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading CSV:", error);
+    }
+  };
+
+  const handleDownloadPDF = async (reportId: string, taxYear: string) => {
+    try {
+      const blob = await downloadPDF.mutateAsync(reportId);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cgt_report_${taxYear}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Error downloading PDF:", error);
     }
   };
 
@@ -38,6 +78,7 @@ export function ReportsPage() {
               onChange={(e) => setSelectedTaxYear(e.target.value)}
               className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-black"
             >
+              <option value="2025-26">2025-26</option>
               <option value="2024-25">2024-25</option>
               <option value="2023-24">2023-24</option>
               <option value="2022-23">2022-23</option>
@@ -137,28 +178,32 @@ export function ReportsPage() {
                                   : "text-red-600"
                               }
                             >
-                              £{report.totals.net_gains.toFixed(2)}
+                              {formatCurrency(report.totals.net_gains)}
                             </span>
                           </div>
                           <div>
                             <span className="font-medium">Taxable Gains:</span>
                             <br />
                             <span className="text-gray-900">
-                              £{report.totals.taxable_gains.toFixed(2)}
+                              {formatCurrency(report.totals.taxable_gains)}
                             </span>
                           </div>
                           <div>
                             <span className="font-medium">AEA Applied:</span>
                             <br />
                             <span className="text-gray-900">
-                              £{report.totals.annual_exempt_amount.toFixed(2)}
+                              {formatCurrency(
+                                report.totals.annual_exempt_amount
+                              )}
                             </span>
                           </div>
                           <div>
                             <span className="font-medium">Carry Forward:</span>
                             <br />
                             <span className="text-gray-900">
-                              £{report.totals.carry_forward_losses.toFixed(2)}
+                              {formatCurrency(
+                                report.totals.carry_forward_losses
+                              )}
                             </span>
                           </div>
                         </div>
@@ -167,28 +212,26 @@ export function ReportsPage() {
 
                     {/* Download Buttons */}
                     <div className="flex space-x-2">
-                      {report.csv_url && (
-                        <a
-                          href={`${apiBase}${report.csv_url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          CSV
-                        </a>
-                      )}
-                      {report.pdf_url && (
-                        <a
-                          href={`${apiBase}${report.pdf_url}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          <Download className="h-4 w-4 mr-1" />
-                          PDF
-                        </a>
-                      )}
+                      <button
+                        onClick={() =>
+                          handleDownloadCSV(report.id, report.tax_year)
+                        }
+                        disabled={downloadCSV.isPending}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        {downloadCSV.isPending ? "Downloading..." : "CSV"}
+                      </button>
+                      <button
+                        onClick={() =>
+                          handleDownloadPDF(report.id, report.tax_year)
+                        }
+                        disabled={downloadPDF.isPending}
+                        className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        {downloadPDF.isPending ? "Downloading..." : "PDF"}
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -205,19 +248,19 @@ export function ReportsPage() {
                     <div>
                       <span className="text-gray-600">Total Proceeds:</span>
                       <p className="font-medium text-gray-900">
-                        £{report.totals.total_proceeds.toFixed(2)}
+                        {formatCurrency(report.totals.total_proceeds)}
                       </p>
                     </div>
                     <div>
                       <span className="text-gray-600">Total Cost:</span>
                       <p className="font-medium text-gray-900">
-                        £{report.totals.total_cost.toFixed(2)}
+                        {formatCurrency(report.totals.total_cost)}
                       </p>
                     </div>
                     <div>
                       <span className="text-gray-600">Disallowed Losses:</span>
                       <p className="font-medium text-red-600">
-                        £{report.totals.disallowed_losses.toFixed(2)}
+                        {formatCurrency(report.totals.disallowed_losses)}
                       </p>
                     </div>
                   </div>

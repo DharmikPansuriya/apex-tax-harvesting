@@ -238,6 +238,7 @@ class DisposalMatch(models.Model):
 class CGTReport(models.Model):
     """Capital Gains Tax report for a tax year"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, help_text="User who generated this report")
     tax_year = models.CharField(max_length=7, help_text="Tax year (e.g., 2024-25)")
     totals = models.JSONField(help_text="Report totals and calculations")
     pdf_path = models.CharField(max_length=500, null=True, blank=True, help_text="Path to PDF file")
@@ -302,3 +303,105 @@ class CSVUpload(models.Model):
     
     def __str__(self):
         return f"{self.filename} - {self.client.full_name} ({self.status})"
+
+
+class TLHExecution(models.Model):
+    """TLH execution record for tracking tax loss harvesting trades"""
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('EXECUTED', 'Executed'),
+        ('CANCELLED', 'Cancelled'),
+        ('FAILED', 'Failed'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='tlh_executions')
+    holding = models.ForeignKey(Holding, on_delete=models.CASCADE, related_name='tlh_executions')
+    
+    # Original position details
+    original_qty = models.DecimalField(max_digits=20, decimal_places=6)
+    original_avg_cost = models.DecimalField(max_digits=20, decimal_places=6)
+    original_unrealised_loss = models.DecimalField(max_digits=20, decimal_places=6)
+    
+    # Execution details
+    sell_price = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    sell_fees = models.DecimalField(max_digits=20, decimal_places=6, default=Decimal('0.00'))
+    sell_date = models.DateField(null=True, blank=True)
+    
+    # Replacement position (optional)
+    replacement_ticker = models.CharField(max_length=20, blank=True)
+    replacement_name = models.CharField(max_length=200, blank=True)
+    replacement_qty = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    replacement_price = models.DecimalField(max_digits=20, decimal_places=6, null=True, blank=True)
+    replacement_fees = models.DecimalField(max_digits=20, decimal_places=6, default=Decimal('0.00'))
+    replacement_date = models.DateField(null=True, blank=True)
+    
+    # Status and tracking
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"TLH Execution: {self.holding.ticker} - {self.client.full_name} ({self.status})"
+    
+    @property
+    def realised_loss(self):
+        """Calculate realised loss from the TLH execution"""
+        if self.sell_price and self.original_avg_cost:
+            result = (self.original_avg_cost - self.sell_price) * self.original_qty - self.sell_fees
+            return result.quantize(Decimal('0.01'))
+        return Decimal('0.00')
+    
+    @property
+    def net_proceeds(self):
+        """Calculate net proceeds from the sale"""
+        if self.sell_price:
+            result = (self.sell_price * self.original_qty) - self.sell_fees
+            return result.quantize(Decimal('0.01'))
+        return Decimal('0.00')
+    
+    @property
+    def original_investment(self):
+        """Calculate total original investment"""
+        result = self.original_qty * self.original_avg_cost
+        return result.quantize(Decimal('0.01'))
+    
+    @property
+    def sale_proceeds(self):
+        """Calculate total proceeds from sale (before fees)"""
+        if self.sell_price:
+            result = self.original_qty * self.sell_price
+            return result.quantize(Decimal('0.01'))
+        return Decimal('0.00')
+    
+    @property
+    def replacement_investment(self):
+        """Calculate total replacement investment"""
+        if self.replacement_qty and self.replacement_price:
+            result = self.replacement_qty * self.replacement_price
+            return result.quantize(Decimal('0.01'))
+        return Decimal('0.00')
+    
+    @property
+    def tax_benefit(self):
+        """Calculate tax benefit based on UK CGT rates"""
+        # UK CGT rates for shares:
+        # - Basic rate (income ≤ £50,270): 10%
+        # - Higher rate (income > £50,270): 20%
+        # - Annual allowance: £3,000 (down from £12,300 in 2022/23)
+        
+        # For now, using higher rate (20%) as default
+        # In a real app, this should be based on user's income level
+        tax_rate = Decimal('0.20')  # 20% for higher rate taxpayers
+        result = abs(self.realised_loss) * tax_rate
+        return result.quantize(Decimal('0.01'))
+    
+    @property
+    def net_loss_after_tax(self):
+        """Calculate net loss after tax benefit"""
+        result = abs(self.realised_loss) - self.tax_benefit
+        return result.quantize(Decimal('0.01'))

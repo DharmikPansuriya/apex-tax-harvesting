@@ -6,11 +6,23 @@ import {
   useWealthManagers,
   useHoldings,
   useTLHOpportunities,
+  useTLHExecutions,
 } from "@/hooks/useApi";
 import { Client } from "@/types";
 import { formatCurrency } from "@/utils/format";
 import Link from "next/link";
-import { TrendingUp, Users, PieChart, Target } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  PieChart,
+  Target,
+  TrendingDown,
+  DollarSign,
+  Wallet,
+  BarChart3,
+  Calculator,
+  Upload,
+} from "lucide-react";
 
 export function GenericDashboard() {
   const { user, wealthManager } = useAuth();
@@ -73,81 +85,6 @@ export function GenericDashboard() {
             )}
           </div>
         )}
-      </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">
-                TLH Opportunities
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {clientType === "wealth_manager"
-                  ? tlhOpportunities?.results?.length || 0
-                  : tlhOpportunities?.results?.length || 0}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Users className="h-6 w-6 text-green-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">
-                {clientType === "wealth_manager"
-                  ? "Clients"
-                  : "Portfolio Value"}
-              </p>
-              <p className="text-2xl font-bold text-gray-900">
-                {clientType === "wealth_manager"
-                  ? clients?.results?.length || 0
-                  : formatCurrency(totalPortfolioValue)}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <PieChart className="h-6 w-6 text-purple-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Holdings</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {clientType === "wealth_manager"
-                  ? clients?.results?.reduce(
-                      (acc: number, client: Client) =>
-                        acc + (client.holding_count || 0),
-                      0
-                    ) || 0
-                  : totalHoldings}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Target className="h-6 w-6 text-orange-600" />
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Tax Savings</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {formatCurrency(potentialTaxSavings)}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Main Content Based on Client Type */}
@@ -249,6 +186,7 @@ function WealthManagerView({ clients }: { clients: Client[] }) {
 function IndividualInvestorView() {
   const { data: holdings } = useHoldings();
   const { data: tlhOpportunities } = useTLHOpportunities();
+  const { data: tlhExecutions } = useTLHExecutions();
 
   // Calculate portfolio metrics from real data
   const totalPortfolioValue =
@@ -267,138 +205,183 @@ function IndividualInvestorView() {
     holdings?.results?.filter((h) => (h.section104_pool?.pooled_qty || 0) > 0)
       .length || 0;
 
-  const potentialSavings =
+  // Calculate total unrealised losses available for TLH
+  const totalUnrealisedLosses =
     tlhOpportunities?.results?.reduce((sum, opp) => {
       return sum + Math.abs(opp.unrealised_pnl || 0);
     }, 0) || 0;
 
+  // Calculate actual tax benefit (20% of losses for UK higher rate taxpayers)
+  const potentialTaxSavings = totalUnrealisedLosses * 0.2;
+
   const opportunitiesCount = tlhOpportunities?.results?.length || 0;
+
+  // Calculate total tax savings from executed TLH trades
+  const totalTaxSavings =
+    tlhExecutions?.results
+      ?.filter((execution) => execution.status === "EXECUTED")
+      .reduce((sum, execution) => sum + Number(execution.tax_benefit), 0) || 0;
+
+  const executedTradesCount =
+    tlhExecutions?.results?.filter(
+      (execution) => execution.status === "EXECUTED"
+    ).length || 0;
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-900">
-        Your Tax Optimization Dashboard
-      </h2>
-
-      {/* Portfolio Overview */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Portfolio Summary
-          </h3>
-          <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-3">
-            <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <TrendingUp className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Total Portfolio Value
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {formatCurrency(totalPortfolioValue)}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
+      {/* Key Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Link href="/holdings">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center h-full">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <DollarSign className="h-6 w-6 text-green-600" />
               </div>
-            </div>
-
-            <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <Target className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Unrealised P&L
-                      </dt>
-                      <dd
-                        className={`text-lg font-medium ${
-                          totalUnrealisedPnl < 0
-                            ? "text-red-600"
-                            : "text-green-600"
-                        }`}
-                      >
-                        {formatCurrency(totalUnrealisedPnl)}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-gray-50 overflow-hidden shadow rounded-lg">
-              <div className="p-5">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <PieChart className="h-6 w-6 text-gray-400" />
-                  </div>
-                  <div className="ml-5 w-0 flex-1">
-                    <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">
-                        Active Holdings
-                      </dt>
-                      <dd className="text-lg font-medium text-gray-900">
-                        {activeHoldings}
-                      </dd>
-                    </dl>
-                  </div>
-                </div>
+              <div className="ml-4 flex flex-col justify-center">
+                <p className="text-sm font-medium text-gray-600">
+                  Portfolio Value
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(totalPortfolioValue)}
+                </p>
               </div>
             </div>
           </div>
-        </div>
+        </Link>
+
+        <Link href="/holdings">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center h-full">
+              <div className="p-2 bg-purple-100 rounded-lg">
+                <PieChart className="h-6 w-6 text-purple-600" />
+              </div>
+              <div className="ml-4 flex flex-col justify-center">
+                <p className="text-sm font-medium text-gray-600">Holdings</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {activeHoldings}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/reports">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center h-full">
+              <div className="p-2 bg-red-100 rounded-lg">
+                <BarChart3 className="h-6 w-6 text-red-600" />
+              </div>
+              <div className="ml-4 flex flex-col justify-center">
+                <p className="text-sm font-medium text-gray-600">
+                  Unrealised P&L
+                </p>
+                <p
+                  className={`text-2xl font-bold ${
+                    totalUnrealisedPnl < 0 ? "text-red-600" : "text-green-600"
+                  }`}
+                >
+                  {formatCurrency(totalUnrealisedPnl)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
       </div>
 
-      {/* TLH Opportunities */}
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-        <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">
-            Tax Loss Harvesting Opportunities
-          </h3>
-          <div className="mt-5">
-            {opportunitiesCount > 0 ? (
-              <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <p className="text-sm text-yellow-700">
-                      <strong>{opportunitiesCount} opportunities found</strong>{" "}
-                      - Potential savings of {formatCurrency(potentialSavings)}{" "}
-                      through strategic loss harvesting. Review your holdings to
-                      optimize your tax position.
-                    </p>
-                  </div>
-                </div>
+      {/* Tax Optimization Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link href="/tlh">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center h-full">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Target className="h-6 w-6 text-blue-600" />
               </div>
-            ) : (
-              <div className="bg-gray-50 border-l-4 border-gray-400 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <p className="text-sm text-gray-700">
-                      No tax loss harvesting opportunities found at this time.
-                      Monitor your portfolio for potential opportunities.
-                    </p>
-                  </div>
-                </div>
+              <div className="ml-4 flex flex-col justify-center">
+                <p className="text-sm font-medium text-gray-600">
+                  TLH Opportunities
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {opportunitiesCount}
+                </p>
+                <div className="h-4"></div> {/* Spacer to match other cards */}
               </div>
-            )}
-            <div className="mt-4">
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/tlh">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center h-full">
+              <div className="p-2 bg-orange-100 rounded-lg">
+                <Calculator className="h-6 w-6 text-orange-600" />
+              </div>
+              <div className="ml-4 flex flex-col justify-center">
+                <p className="text-sm font-medium text-gray-600">
+                  Potential Tax Savings
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(potentialTaxSavings)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  20% out of {formatCurrency(totalUnrealisedLosses)} total
+                  losses
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link href="/tlh-executions">
+          <div className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <div className="flex items-center h-full">
+              <div className="p-2 bg-green-100 rounded-lg">
+                <Wallet className="h-6 w-6 text-green-600" />
+              </div>
+              <div className="ml-4 flex flex-col justify-center">
+                <p className="text-sm font-medium text-gray-600">
+                  Total Tax Savings
+                </p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {formatCurrency(totalTaxSavings)}
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  From {executedTradesCount} executed APEX trades
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      {/* TLH Opportunities Alert */}
+      {opportunitiesCount > 0 && (
+        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 p-6 rounded-lg">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Target className="h-8 w-8 text-yellow-600" />
+            </div>
+            <div className="ml-4 flex-1">
+              <h3 className="text-lg font-medium text-yellow-800">
+                Tax Loss Harvesting Alert
+              </h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                <strong>{opportunitiesCount} opportunities found</strong> -
+                Potential tax savings of{" "}
+                <strong>{formatCurrency(potentialTaxSavings)}</strong> through
+                strategic loss harvesting.
+              </p>
+            </div>
+            <div className="ml-4">
               <Link
                 href="/tlh"
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
               >
-                View All Opportunities
+                Review Opportunities
               </Link>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Quick Actions */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
@@ -447,7 +430,7 @@ function IndividualInvestorView() {
             >
               <div>
                 <span className="rounded-lg inline-flex p-3 bg-purple-50 text-purple-700 ring-4 ring-white">
-                  <TrendingUp className="h-6 w-6" />
+                  <Upload className="h-6 w-6" />
                 </span>
               </div>
               <div className="mt-4">

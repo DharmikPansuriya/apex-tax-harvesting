@@ -156,3 +156,49 @@ export interface WealthManager {
   created_at: string;
   updated_at: string;
 }
+
+export interface TLHExecution {
+  id: string;
+  client: string;
+  client_name: string;
+  holding: string;
+  holding_ticker: string;
+  holding_name: string;
+  original_qty: number;
+  original_avg_cost: number;
+  original_unrealised_loss: number;
+  sell_price?: number;
+  sell_fees: number;
+  sell_date?: string;
+  replacement_ticker?: string;
+  replacement_name?: string;
+  replacement_qty?: number;
+  replacement_price?: number;
+  replacement_fees: number;
+  replacement_date?: string;
+  status: "PENDING" | "EXECUTED" | "CANCELLED" | "FAILED";
+  notes: string;
+  realised_loss: number;
+  net_proceeds: number;
+  original_investment: number;
+  sale_proceeds: number;
+  replacement_investment: number;
+  tax_benefit: number;
+  net_loss_after_tax: number;
+  original_avg_cost_display: number;
+  sell_price_display?: number;
+  replacement_price_display?: number;
+  original_qty_display: number;
+  replacement_qty_display?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReplacementSuggestion {
+  ticker: string;
+  name: string;
+  sector: string;
+  current_price: number;
+  market_cap: string;
+  description: string;
+}

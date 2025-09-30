@@ -31,12 +31,13 @@ class CGTReportGenerator:
         # Ensure reports directory exists
         os.makedirs(self.reports_dir, exist_ok=True)
     
-    def generate_report(self, tax_year: str) -> CGTReport:
+    def generate_report(self, tax_year: str, user=None) -> CGTReport:
         """
-        Generate a complete CGT report for the specified tax year.
+        Generate a complete CGT report for the specified tax year and user.
         
         Args:
             tax_year: Tax year in format "2024-25"
+            user: Django User object to filter transactions for
             
         Returns:
             CGTReport object with file paths
@@ -49,8 +50,8 @@ class CGTReportGenerator:
         start_date = datetime(start_year, 4, 6).date()
         end_date = datetime(end_year, 4, 5).date()
         
-        # Get all disposals in the tax year
-        disposals = self._get_disposals_in_period(start_date, end_date)
+        # Get disposals in the tax year for the specific user
+        disposals = self._get_disposals_in_period(start_date, end_date, user)
         
         # Calculate totals
         totals = self._calculate_totals(disposals)
@@ -60,8 +61,9 @@ class CGTReportGenerator:
         
         # Generate files
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        csv_filename = f"cgt_report_{tax_year}_{timestamp}.csv"
-        pdf_filename = f"cgt_report_{tax_year}_{timestamp}.pdf"
+        user_suffix = f"_user_{user.id}" if user else "_system"
+        csv_filename = f"cgt_report_{tax_year}_{timestamp}{user_suffix}.csv"
+        pdf_filename = f"cgt_report_{tax_year}_{timestamp}{user_suffix}.pdf"
         
         csv_path = os.path.join(self.reports_dir, csv_filename)
         pdf_path = os.path.join(self.reports_dir, pdf_filename)
@@ -74,6 +76,7 @@ class CGTReportGenerator:
         
         # Create CGTReport record
         cgt_report = CGTReport.objects.create(
+            user=user,
             tax_year=tax_year,
             totals=totals,
             csv_path=csv_path,
@@ -93,13 +96,42 @@ class CGTReportGenerator:
         else:
             return data
     
-    def _get_disposals_in_period(self, start_date, end_date) -> List[Dict]:
-        """Get all disposals in the specified period with compliance calculations"""
+    def _get_disposals_in_period(self, start_date, end_date, user=None) -> List[Dict]:
+        """Get disposals in the specified period with compliance calculations for a specific user"""
+        # Base query for sell transactions in the date range
         sell_transactions = Transaction.objects.filter(
             side='SELL',
             trade_date__gte=start_date,
             trade_date__lte=end_date
-        ).order_by('trade_date', 'holding__ticker')
+        )
+        
+        # Filter by user if provided
+        if user:
+            try:
+                user_profile = user.profile
+            except:
+                # If no profile, return empty list
+                return []
+            
+            # Filter transactions based on user type
+            if user_profile.client_type in ['wealth_manager', 'financial_advisor']:
+                if hasattr(user, 'wealth_manager'):
+                    sell_transactions = sell_transactions.filter(
+                        holding__client__wealth_manager=user.wealth_manager
+                    )
+                else:
+                    return []
+            elif user_profile.client_type == 'individual':
+                sell_transactions = sell_transactions.filter(
+                    holding__client__first_name=user.first_name,
+                    holding__client__last_name=user.last_name,
+                    holding__client__email=user.email,
+                    holding__client__wealth_manager=None
+                )
+            else:
+                return []
+        
+        sell_transactions = sell_transactions.order_by('trade_date', 'holding__ticker')
         
         disposals = []
         for sell_tx in sell_transactions:

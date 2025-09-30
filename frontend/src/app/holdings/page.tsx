@@ -2,11 +2,14 @@
 
 import { Layout } from "@/components/Layout";
 import { HoldingsPage } from "@/components/HoldingsPage";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 export default function Holdings() {
   return (
-    <Layout>
-      <HoldingsPage />
-    </Layout>
+    <ProtectedRoute>
+      <Layout>
+        <HoldingsPage />
+      </Layout>
+    </ProtectedRoute>
   );
 }

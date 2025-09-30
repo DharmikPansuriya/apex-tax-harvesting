@@ -6,7 +6,7 @@ from decimal import Decimal
 from rest_framework import serializers
 from core.models import (
     WealthManager, Client, Holding, Transaction, Section104Pool, 
-    DisposalMatch, CGTReport, CSVUpload
+    DisposalMatch, CGTReport, CSVUpload, TLHExecution
 )
 
 
@@ -208,9 +208,10 @@ class CGTReportSerializer(serializers.ModelSerializer):
     class Meta:
         model = CGTReport
         fields = [
-            'id', 'tax_year', 'totals', 'csv_path', 'pdf_path',
+            'id', 'user', 'tax_year', 'totals', 'csv_path', 'pdf_path',
             'csv_url', 'pdf_url', 'created_at'
         ]
+        read_only_fields = ['id', 'user', 'created_at']
     
     def get_csv_url(self, obj):
         """Get CSV download URL"""
@@ -272,3 +273,118 @@ class TLHOpportunitySerializer(serializers.Serializer):
             'constraints': instance['constraints'],
             'eligible': not instance['constraints']['thirty_day_rule']['blocked']
         }
+
+
+class TLHExecutionSerializer(serializers.ModelSerializer):
+    """Serializer for TLH execution"""
+    holding_ticker = serializers.CharField(source='holding.ticker', read_only=True)
+    holding_name = serializers.CharField(source='holding.name', read_only=True)
+    client_name = serializers.CharField(source='client.full_name', read_only=True)
+    
+    # Custom serializer fields to format display values
+    original_avg_cost_display = serializers.SerializerMethodField()
+    sell_price_display = serializers.SerializerMethodField()
+    replacement_price_display = serializers.SerializerMethodField()
+    original_qty_display = serializers.SerializerMethodField()
+    replacement_qty_display = serializers.SerializerMethodField()
+    
+    # Calculated fields
+    realised_loss = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    net_proceeds = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    original_investment = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    sale_proceeds = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    replacement_investment = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    tax_benefit = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    net_loss_after_tax = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    
+    class Meta:
+        model = TLHExecution
+        fields = [
+            'id', 'client', 'client_name', 'holding', 'holding_ticker', 'holding_name',
+            'original_qty', 'original_avg_cost', 'original_unrealised_loss',
+            'sell_price', 'sell_fees', 'sell_date',
+            'replacement_ticker', 'replacement_name', 'replacement_qty', 
+            'replacement_price', 'replacement_fees', 'replacement_date',
+            'status', 'notes', 'realised_loss', 'net_proceeds',
+            'original_investment', 'sale_proceeds', 'replacement_investment',
+            'tax_benefit', 'net_loss_after_tax',
+            'original_avg_cost_display', 'sell_price_display', 'replacement_price_display',
+            'original_qty_display', 'replacement_qty_display',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'created_at', 'updated_at', 'realised_loss', 'net_proceeds',
+            'original_investment', 'sale_proceeds', 'replacement_investment',
+            'tax_benefit', 'net_loss_after_tax'
+        ]
+    
+    def get_original_avg_cost_display(self, obj):
+        """Format original average cost to 2 decimal places"""
+        return float(obj.original_avg_cost.quantize(Decimal('0.01')))
+    
+    def get_sell_price_display(self, obj):
+        """Format sell price to 2 decimal places"""
+        if obj.sell_price:
+            return float(obj.sell_price.quantize(Decimal('0.01')))
+        return None
+    
+    def get_replacement_price_display(self, obj):
+        """Format replacement price to 2 decimal places"""
+        if obj.replacement_price:
+            return float(obj.replacement_price.quantize(Decimal('0.01')))
+        return None
+    
+    def get_original_qty_display(self, obj):
+        """Format original quantity to 0 decimal places (whole shares)"""
+        return int(obj.original_qty.quantize(Decimal('1')))
+    
+    def get_replacement_qty_display(self, obj):
+        """Format replacement quantity to 0 decimal places (whole shares)"""
+        if obj.replacement_qty:
+            return int(obj.replacement_qty.quantize(Decimal('1')))
+        return None
+
+
+class TLHExecutionCreateSerializer(serializers.Serializer):
+    """Serializer for creating TLH executions"""
+    holding_id = serializers.UUIDField()
+    sell_price = serializers.DecimalField(max_digits=20, decimal_places=6, required=False)
+    sell_fees = serializers.DecimalField(max_digits=20, decimal_places=6, default=Decimal('0.00'))
+    replacement_ticker = serializers.CharField(max_length=20, required=False, allow_blank=True)
+    replacement_name = serializers.CharField(max_length=200, required=False, allow_blank=True)
+    replacement_qty = serializers.DecimalField(max_digits=20, decimal_places=6, required=False)
+    replacement_price = serializers.DecimalField(max_digits=20, decimal_places=6, required=False)
+    replacement_fees = serializers.DecimalField(max_digits=20, decimal_places=6, default=Decimal('0.00'))
+    notes = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate_holding_id(self, value):
+        """Validate that the holding exists and belongs to the client"""
+        try:
+            holding = Holding.objects.get(id=value)
+            # Check if holding belongs to the client (will be set in view)
+            return value
+        except Holding.DoesNotExist:
+            raise serializers.ValidationError("Holding not found")
+    
+    def validate(self, data):
+        """Validate the TLH execution data"""
+        # If replacement is specified, all replacement fields must be provided
+        replacement_fields = ['replacement_ticker', 'replacement_qty', 'replacement_price']
+        replacement_provided = any(data.get(field) for field in replacement_fields)
+        
+        if replacement_provided:
+            for field in replacement_fields:
+                if not data.get(field):
+                    raise serializers.ValidationError(f"{field} is required when specifying a replacement")
+        
+        return data
+
+
+class ReplacementSuggestionSerializer(serializers.Serializer):
+    """Serializer for replacement security suggestions"""
+    ticker = serializers.CharField()
+    name = serializers.CharField()
+    sector = serializers.CharField()
+    current_price = serializers.DecimalField(max_digits=20, decimal_places=6)
+    market_cap = serializers.CharField()
+    description = serializers.CharField()

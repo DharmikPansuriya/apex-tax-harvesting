@@ -119,10 +119,11 @@ export function useGenerateCGTReport() {
 }
 
 // TLH Opportunities hooks
-export function useTLHOpportunities() {
+export function useTLHOpportunities(enabled: boolean = true) {
   return useQuery({
     queryKey: queryKeys.tlhOpportunities,
     queryFn: () => apiClient.getTLHOpportunities(),
+    enabled,
     staleTime: 2 * 60 * 1000, // 2 minutes (more frequent for TLH opportunities)
   });
 }
@@ -206,5 +207,72 @@ export function useWealthManagers() {
     queryKey: queryKeys.wealthManagers,
     queryFn: () => apiClient.getWealthManagers(),
     staleTime: 10 * 60 * 1000, // 10 minutes
+  });
+}
+
+// TLH Execution hooks
+export function useTLHExecutions(enabled: boolean = true) {
+  return useQuery({
+    queryKey: ["tlh-executions"],
+    queryFn: () => apiClient.getTLHExecutions(),
+    enabled,
+  });
+}
+
+export function useCreateTLHExecution() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      holding_id: string;
+      client_id?: string;
+      sell_price?: number;
+      sell_fees?: number;
+      replacement_ticker?: string;
+      replacement_name?: string;
+      replacement_qty?: number;
+      replacement_price?: number;
+      replacement_fees?: number;
+      notes?: string;
+    }) => apiClient.createTLHExecution(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tlh-executions"] });
+      queryClient.invalidateQueries({ queryKey: ["tlh-opportunities"] });
+    },
+  });
+}
+
+export function useExecuteTLH() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (executionId: string) => apiClient.executeTLH(executionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tlh-executions"] });
+      queryClient.invalidateQueries({ queryKey: ["holdings"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+}
+
+export function useCancelTLH() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (executionId: string) => apiClient.cancelTLH(executionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tlh-executions"] });
+    },
+  });
+}
+
+export function useReplacementSuggestions(
+  holdingId: string,
+  enabled: boolean = true
+) {
+  return useQuery({
+    queryKey: ["replacement-suggestions", holdingId],
+    queryFn: () => apiClient.getReplacementSuggestions(holdingId),
+    enabled: enabled && !!holdingId,
   });
 }

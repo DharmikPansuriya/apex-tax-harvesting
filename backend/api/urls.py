@@ -7,7 +7,7 @@ from rest_framework.routers import DefaultRouter
 from api.viewsets import (
     WealthManagerViewSet, ClientViewSet, HoldingViewSet, TransactionViewSet, 
     Section104PoolViewSet, DisposalMatchViewSet, CGTReportViewSet, 
-    TLHOpportunityViewSet, CSVUploadViewSet
+    TLHOpportunityViewSet, CSVUploadViewSet, TLHExecutionViewSet
 )
 from api.auth_views import login, logout, refresh_token, me, register
 
@@ -21,6 +21,7 @@ router.register(r'section104-pools', Section104PoolViewSet)
 router.register(r'disposal-matches', DisposalMatchViewSet)
 router.register(r'reports', CGTReportViewSet)
 router.register(r'tlh/opportunities', TLHOpportunityViewSet, basename='tlh-opportunities')
+router.register(r'tlh/executions', TLHExecutionViewSet, basename='tlh-executions')
 router.register(r'csv-uploads', CSVUploadViewSet, basename='csv-upload')
 
 urlpatterns = [

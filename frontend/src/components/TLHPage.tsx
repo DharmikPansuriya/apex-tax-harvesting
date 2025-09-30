@@ -3,17 +3,27 @@
 import { useState } from "react";
 import { formatCurrency } from "@/utils/format";
 import { useTLHOpportunities } from "@/hooks/useApi";
+import { TLHExecutionModal } from "./TLHExecutionModal";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   TrendingDown,
   AlertTriangle,
   CheckCircle,
   XCircle,
   Info,
+  Play,
 } from "lucide-react";
 
 export function TLHPage() {
   const [filter, setFilter] = useState<"all" | "eligible" | "blocked">("all");
-  const { data: tlhData, isLoading, error } = useTLHOpportunities();
+  const [selectedOpportunity, setSelectedOpportunity] = useState<any>(null);
+  const [isExecutionModalOpen, setIsExecutionModalOpen] = useState(false);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const {
+    data: tlhData,
+    isLoading,
+    error,
+  } = useTLHOpportunities(isAuthenticated && !authLoading);
 
   const opportunities = tlhData?.results || [];
 
@@ -51,6 +61,16 @@ export function TLHPage() {
       return "Evaluate harvesting; compare to other candidates first";
     }
     return "Monitor for now; reassess if loss grows";
+  };
+
+  const handleExecuteTLH = (opportunity: any) => {
+    setSelectedOpportunity(opportunity);
+    setIsExecutionModalOpen(true);
+  };
+
+  const handleExecutionSuccess = () => {
+    // Refresh the opportunities list by refetching data
+    // Note: This will be handled by React Query invalidation in the mutation
   };
 
   return (
@@ -108,7 +128,7 @@ export function TLHPage() {
 
       {/* Opportunities List */}
       <div className="space-y-4">
-        {isLoading ? (
+        {authLoading || isLoading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
             <p className="text-gray-600 mt-2">Loading TLH opportunities...</p>
@@ -251,6 +271,19 @@ export function TLHPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Execute Button */}
+              {opportunity.eligible && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <button
+                    onClick={() => handleExecuteTLH(opportunity)}
+                    className="w-full flex items-center justify-center px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                  >
+                    <Play className="h-4 w-4 mr-2" />
+                    Execute TLH
+                  </button>
+                </div>
+              )}
             </div>
           ))
         )}
@@ -332,6 +365,19 @@ export function TLHPage() {
           </div>
         </div>
       </div>
+
+      {/* TLH Execution Modal */}
+      {selectedOpportunity && (
+        <TLHExecutionModal
+          opportunity={selectedOpportunity}
+          isOpen={isExecutionModalOpen}
+          onClose={() => {
+            setIsExecutionModalOpen(false);
+            setSelectedOpportunity(null);
+          }}
+          onSuccess={handleExecutionSuccess}
+        />
+      )}
     </div>
   );
 }
