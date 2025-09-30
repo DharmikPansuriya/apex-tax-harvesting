@@ -9,7 +9,7 @@ APEX is a **professional tool** for wealth managers and financial advisers to id
 ### ✅ What APEX IS (Professional Tool)
 
 - **Analytics Platform**: Identifies potential TLH opportunities based on portfolio data
-- **Execution Support**: Provides trade suggestions and replacement recommendations
+- **Execution Support**: Provides trade suggestions and replacement options for consideration
 - **Reporting Tool**: Generates compliance reports and audit trails
 - **Professional Software**: Designed for use by qualified financial professionals
 
@@ -85,10 +85,11 @@ APEX does not perform regulated activities under FSMA 2000:
 
 ### Permitted Claims
 
-- "Identifies tax-loss harvesting opportunities"
+- "Identifies potential tax-loss harvesting opportunities"
 - "Supports compliance with tax regulations"
 - "Provides audit trails for regulatory purposes"
 - "Designed for professional wealth managers"
+- "Provides analytical tools for professional use"
 
 ### Prohibited Claims
 
@@ -96,6 +97,9 @@ APEX does not perform regulated activities under FSMA 2000:
 - "Provides investment advice"
 - "Ensures compliance"
 - "Reduces tax liability"
+- "Generates additional returns"
+- "Improves investment performance"
+- "Maximizes tax benefits"
 
 ## Data and Privacy
 
@@ -108,10 +112,10 @@ APEX does not perform regulated activities under FSMA 2000:
 
 ### Security Measures
 
-- Encryption: AES-256 at rest, TLS 1.3 in transit
-- Access controls: Multi-factor authentication
-- Monitoring: 24/7 security monitoring
-- Incident response: 4-hour response time
+- Encryption: Industry-standard encryption at rest and in transit
+- Access controls: User authentication and role-based access
+- Monitoring: Security monitoring and logging
+- Incident response: Incident response procedures in place
 
 ## Next Steps
 

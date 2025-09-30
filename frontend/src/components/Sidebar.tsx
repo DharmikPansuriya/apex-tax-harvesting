@@ -24,7 +24,7 @@ const getNavigation = (isWealthManager: boolean) => {
     { name: "Holdings", href: "/holdings", icon: User },
     { name: "Transactions", href: "/transactions", icon: ArrowLeftRight },
     { name: "Reports", href: "/reports", icon: FileText },
-    { name: "TLH Opportunities", href: "/tlh", icon: TrendingDown },
+    { name: "TLH Analysis", href: "/tlh", icon: TrendingDown },
     { name: "TLH Executions", href: "/tlh-executions", icon: Play },
     { name: "CSV Upload", href: "/upload", icon: Upload },
   ];

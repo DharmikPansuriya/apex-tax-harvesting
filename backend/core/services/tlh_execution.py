@@ -199,14 +199,14 @@ class TLHExecutionService:
     
     def suggest_replacements(self, holding: Holding, limit: int = 5) -> List[Dict]:
         """
-        Suggest replacement securities for TLH
+        Identify potential replacement securities for TLH analysis
         
         Args:
-            holding: The holding being harvested
-            limit: Maximum number of suggestions
+            holding: The holding being analyzed
+            limit: Maximum number of options to return
             
         Returns:
-            List of replacement suggestions
+            List of potential replacement options for professional review
         """
         # Get UK securities from market data service
         uk_securities = self.market_service.get_top_uk_securities()

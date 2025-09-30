@@ -475,11 +475,11 @@ class CGTReportViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class TLHOpportunityViewSet(viewsets.ViewSet):
-    """ViewSet for TLH opportunities"""
+    """ViewSet for TLH analysis results"""
     permission_classes = [IsAuthenticated]
     
     def list(self, request):
-        """Get ranked list of TLH opportunities"""
+        """Get analyzed list of TLH candidates for professional review"""
         try:
             # Get user's holdings based on user type
             try:

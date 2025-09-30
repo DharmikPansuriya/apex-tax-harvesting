@@ -66,7 +66,7 @@ export function ReportsPage() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">CGT Reports</h1>
           <p className="text-gray-600 mt-2">
-            Capital Gains Tax reports and downloads
+            Capital Gains Tax analysis reports and downloads
           </p>
         </div>
 

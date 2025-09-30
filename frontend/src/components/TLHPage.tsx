@@ -55,12 +55,12 @@ export function TLHPage() {
       return `Wait: ${blockedMsg}`;
     }
     if ((score ?? 0) >= 70) {
-      return "Consider harvesting and switch to a similar, not identical, security";
+      return "High priority for analysis - consider similar, not identical, replacement options";
     }
     if ((score ?? 0) >= 40) {
-      return "Evaluate harvesting; compare to other candidates first";
+      return "Medium priority - evaluate against other candidates";
     }
-    return "Monitor for now; reassess if loss grows";
+    return "Lower priority - monitor for changes";
   };
 
   const handleExecuteTLH = (opportunity: any) => {
@@ -76,9 +76,9 @@ export function TLHPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">TLH Opportunities</h1>
+        <h1 className="text-3xl font-bold text-gray-900">TLH Analysis</h1>
         <p className="text-gray-600 mt-2">
-          Tax Loss Harvesting candidates ranked by potential
+          Tax Loss Harvesting candidates ranked by analysis score
         </p>
       </div>
 
@@ -141,12 +141,12 @@ export function TLHPage() {
           <div className="text-center py-12">
             <TrendingDown className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No opportunities found
+              No analysis results found
             </h3>
             <p className="text-gray-600">
               {filter === "all"
-                ? "No tax loss harvesting opportunities available"
-                : `No ${filter} opportunities found`}
+                ? "No tax loss harvesting analysis results available"
+                : `No ${filter} analysis results found`}
             </p>
           </div>
         ) : (
@@ -294,7 +294,7 @@ export function TLHPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Total Opportunities
+              Total Analysis Results
             </h3>
             <p className="text-3xl font-bold text-blue-600">
               {opportunities.length}
@@ -321,7 +321,7 @@ export function TLHPage() {
 
           <div className="bg-white p-6 rounded-lg shadow">
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Total Loss Potential
+              Total Loss Analysis
             </h3>
             <p className="text-3xl font-bold text-orange-600">
               £
@@ -340,26 +340,31 @@ export function TLHPage() {
           <Info className="h-5 w-5 text-blue-500 mr-3 mt-0.5" />
           <div>
             <h3 className="text-lg font-semibold text-blue-900 mb-2">
-              About Tax Loss Harvesting
+              About Tax Loss Harvesting Analysis
             </h3>
             <div className="text-sm text-blue-800 space-y-2">
               <p className="text-xs text-blue-700">
-                Score legend: 0–100 within today’s candidates (100 = strongest
-                TLH candidate today; 0 = weakest).
+                Analysis score: 0–100 within current candidates (100 = highest
+                analysis priority; 0 = lowest priority).
               </p>
               <p>
-                Tax Loss Harvesting (TLH) allows you to realize capital losses
-                to offset capital gains, reducing your overall tax liability.
+                Tax Loss Harvesting (TLH) analysis identifies potential capital
+                losses that may offset capital gains, subject to professional
+                review and compliance.
               </p>
               <p>
-                <strong>UK CGT Rules:</strong> The 30-day rule prevents you from
+                <strong>UK CGT Rules:</strong> The 30-day rule prevents
                 repurchasing the same security within 30 days of selling it, or
-                the loss will be disallowed.
+                the loss may be disallowed.
               </p>
               <p>
                 <strong>Section 104 Pooling:</strong> All shares of the same
                 class are pooled together, with disposals costed at the average
                 cost from the pool.
+              </p>
+              <p className="text-xs text-blue-700 font-medium">
+                ⚠️ This analysis is for professional use only and requires
+                professional judgment.
               </p>
             </div>
           </div>

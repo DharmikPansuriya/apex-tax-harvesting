@@ -134,7 +134,7 @@ export function TLHExecutionModal({
         <div className="flex items-center justify-between p-6 border-b">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">
-              Execute Tax Loss Harvesting
+              Create TLH Execution Plan
             </h2>
             <p className="text-sm text-gray-600 mt-1">
               {opportunity.ticker} - {opportunity.name}
@@ -307,14 +307,14 @@ export function TLHExecutionModal({
                   className="flex items-center px-3 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   <Search className="h-4 w-4 mr-2" />
-                  Get Suggestions
+                  Get Options
                 </button>
               </div>
 
               {showSuggestions && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h4 className="font-semibold text-blue-800 mb-3">
-                    Suggested Replacements
+                    Replacement Options
                   </h4>
                   {suggestionsLoading ? (
                     <div className="flex items-center justify-center py-4">
@@ -348,7 +348,9 @@ export function TLHExecutionModal({
                       ))}
                     </div>
                   ) : (
-                    <p className="text-blue-700">No suggestions available</p>
+                    <p className="text-blue-700">
+                      No replacement options available
+                    </p>
                   )}
                 </div>
               )}
@@ -456,12 +458,12 @@ export function TLHExecutionModal({
                 <div className="flex items-center">
                   <AlertTriangle className="h-5 w-5 text-yellow-600 mr-2" />
                   <h3 className="text-lg font-semibold text-yellow-800">
-                    Confirm TLH Execution
+                    Confirm TLH Execution Plan
                   </h3>
                 </div>
                 <p className="text-yellow-700 mt-2">
-                  Please review all details before executing. This action cannot
-                  be undone.
+                  Please review all details before creating execution plan. This
+                  will create an audit trail for compliance purposes.
                 </p>
               </div>
 
@@ -594,7 +596,7 @@ export function TLHExecutionModal({
                     Creating...
                   </>
                 ) : (
-                  "Create TLH Execution"
+                  "Create Execution Plan"
                 )}
               </button>
             ) : (

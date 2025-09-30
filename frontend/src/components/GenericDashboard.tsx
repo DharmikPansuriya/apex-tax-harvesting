@@ -65,7 +65,7 @@ export function GenericDashboard() {
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
         <h1 className="text-3xl font-bold">Welcome to APEX</h1>
-        {/* <p className="text-blue-100 mt-2">Advanced Tax Optimization Platform</p> */}
+        <p className="text-blue-100 mt-2">Professional Tax Analysis Platform</p>
         {user && (
           <div className="mt-4">
             <p className="text-lg">
@@ -317,7 +317,7 @@ function IndividualInvestorView() {
               </div>
               <div className="ml-4 flex flex-col justify-center">
                 <p className="text-sm font-medium text-gray-600">
-                  Potential Tax Savings
+                  Potential Tax Benefit
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatCurrency(potentialTaxSavings)}
@@ -339,7 +339,7 @@ function IndividualInvestorView() {
               </div>
               <div className="ml-4 flex flex-col justify-center">
                 <p className="text-sm font-medium text-gray-600">
-                  Total Tax Savings
+                  Total Tax Benefits
                 </p>
                 <p className="text-2xl font-bold text-gray-900">
                   {formatCurrency(totalTaxSavings)}
@@ -362,13 +362,13 @@ function IndividualInvestorView() {
             </div>
             <div className="ml-4 flex-1">
               <h3 className="text-lg font-medium text-yellow-800">
-                Tax Loss Harvesting Alert
+                Tax Loss Harvesting Analysis
               </h3>
               <p className="text-sm text-yellow-700 mt-1">
-                <strong>{opportunitiesCount} opportunities found</strong> -
-                Potential tax savings of{" "}
+                <strong>{opportunitiesCount} opportunities identified</strong> -
+                Potential tax benefit of{" "}
                 <strong>{formatCurrency(potentialTaxSavings)}</strong> through
-                strategic loss harvesting.
+                strategic loss harvesting analysis.
               </p>
             </div>
             <div className="ml-4">
@@ -376,7 +376,7 @@ function IndividualInvestorView() {
                 href="/tlh"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
               >
-                Review Opportunities
+                Review Analysis
               </Link>
             </div>
           </div>
@@ -419,7 +419,7 @@ function IndividualInvestorView() {
               <div className="mt-4">
                 <h3 className="text-lg font-medium">Generate Reports</h3>
                 <p className="mt-2 text-sm text-gray-500">
-                  Create CGT reports and tax optimization summaries
+                  Create CGT reports and tax analysis summaries
                 </p>
               </div>
             </Link>

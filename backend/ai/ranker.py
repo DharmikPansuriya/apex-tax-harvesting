@@ -1,8 +1,8 @@
 """
-TLH Candidate Ranker
+TLH Analysis Engine
 
-AI/ML helper for ranking Tax-Loss Harvesting candidates.
-Provides deterministic heuristic scoring with ML interface stubs.
+Professional tool for analyzing Tax-Loss Harvesting candidates.
+Provides deterministic heuristic scoring for professional review.
 """
 
 from decimal import Decimal
@@ -14,20 +14,20 @@ from core.models import Holding, Transaction, Section104Pool, DisposalMatch
 
 
 class TLHRanker:
-    """Ranks TLH candidates using deterministic heuristics with ML interface stubs"""
+    """Analyzes TLH candidates using deterministic heuristics for professional review"""
     
     def __init__(self):
         self.thirty_day_days = 30
     
     def rank_tlh_candidates(self, portfolio_snapshot: Optional[Dict] = None) -> List[Dict]:
         """
-        Rank TLH candidates based on unrealised losses and compliance constraints.
+        Analyze TLH candidates based on unrealised losses and compliance constraints.
         
         Args:
             portfolio_snapshot: Optional portfolio snapshot (if None, uses current state)
             
         Returns:
-            List of ranked candidates with scores and explanations
+            List of analyzed candidates with scores for professional review
         """
         if portfolio_snapshot is None:
             portfolio_snapshot = self._get_current_portfolio_snapshot()
